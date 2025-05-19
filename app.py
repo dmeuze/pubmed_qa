@@ -50,9 +50,20 @@ def get_pubmed_abstract_cached(pmid):
         save_cache(cache)
     return abstract, False
 
+def normalize_question(question):
+    # Convert to lowercase
+    question = question.lower()
+    # Remove punctuation
+    question = ''.join(c for c in question if c.isalnum() or c.isspace())
+    # Remove extra whitespace
+    question = ' '.join(question.split())
+    return question
+
 def ask_question_cached(text, question):
     cache = load_cache()
-    key_raw = text + question
+    # Normalize the question for better caching
+    normalized_question = normalize_question(question)
+    key_raw = text + normalized_question
     key = hashlib.sha256(key_raw.encode()).hexdigest()
 
     if key in cache["answers"]:
