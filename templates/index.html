@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>PubMed Q&A</title>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/style.css') }}"
+    />
+  </head>
+  <body>
+    <nav>
+      <a href="/">Vraag AI</a> |
+      <a href="/vertaling">Vertaal Abstract</a>
+    </nav>
+    <hr />
+    <h1>Stel een vraag over een PubMed abstract</h1>
+    <form method="POST">
+      <label>PubMed PMID:</label><br />
+      <input type="text" name="pmid" size="40" required /><br /><br />
+      <label>Jouw vraag:</label><br />
+      <input type="text" name="question" size="80" required /><br /><br />
+      <button type="submit">Vraag AI</button>
+      {% if pmid %}
+      <p><strong>Gebruikte PubMed ID:</strong> {{ pmid }}</p>
+      {% endif %}
+    </form>
+    {% if abstract %}
+    <h2>Abstract:</h2>
+    <p>{{ abstract }}</p>
+    {% endif %} {% if answer %}
+    <h2>AI Antwoord:</h2>
+    <p>{{ answer }}</p>
+    {% endif %}
+  </body>
+</html>
