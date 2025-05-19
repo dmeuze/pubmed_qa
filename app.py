@@ -58,7 +58,8 @@ Antwoord in het Nederlands, in eenvoudige en begrijpelijke taal:
 
 def translate_abstract_to_dutch(text):
     prompt = f"""
-Vertaal de volgende medische abstract naar het Nederlands. Gebruik duidelijke en begrijpelijke taal:
+Vertaal de volgende medische abstracts naar het Nederlands. Gebruik duidelijke en begrijpelijke taal.
+Behoud de PMID referenties en vertaal alleen de abstract tekst.
 
 {text}
 
