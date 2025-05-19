@@ -33,7 +33,8 @@ Belangrijke instructies:
 1. Verwijs naar de specifieke artikelen (PMID) waar je je antwoord op baseert
 2. Als er tegenstrijdige informatie is tussen artikelen, markeer dit met [TEGENSTRIJDIG] en leg uit waarom
 3. Geef aan welke artikelen elkaar bevestigen en welke elkaar tegenspreken
-4. Gebruik alleen informatie die direct uit de gegeven teksten komt
+4. Als het antwoord niet direct in de gegeven teksten staat, markeer dit met [NIET IN TEKST] en geef dan een betrouwbaar antwoord gebaseerd op je medische expertise
+5. Gebruik alleen informatie die direct uit de gegeven teksten komt, tenzij je [NIET IN TEKST] gebruikt
 
 Teksten:
 {text}
@@ -52,8 +53,9 @@ Antwoord in het Nederlands, in eenvoudige en begrijpelijke taal:
     )
     answer = response.choices[0].message['content'].strip()
     
-    # Mark contradictions in blue
+    # Mark contradictions and non-text answers in blue
     answer = answer.replace("[TEGENSTRIJDIG]", '<span class="contradiction">[TEGENSTRIJDIG]</span>')
+    answer = answer.replace("[NIET IN TEKST]", '<span class="contradiction">[NIET IN TEKST]</span>')
     return answer
 
 def translate_abstract_to_dutch(text):
