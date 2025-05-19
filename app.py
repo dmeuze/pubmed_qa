@@ -59,22 +59,49 @@ Antwoord in het Nederlands, in eenvoudige en begrijpelijke taal:
     return answer
 
 def translate_abstract_to_dutch(text):
-    prompt = f"""
-Vertaal de volgende medische abstracts naar het Nederlands. Gebruik duidelijke en begrijpelijke taal.
-Behoud de PMID referenties en vertaal alleen de abstract tekst.
+    # Split the text into individual abstracts
+    abstracts = text.split('\n\n')
+    translated_abstracts = []
+    
+    for abstract in abstracts:
+        if not abstract.strip():
+            continue
+            
+        # Extract PMID if present
+        pmid = ""
+        if "(PMID:" in abstract:
+            pmid_start = abstract.find("(PMID:")
+            pmid_end = abstract.find(")", pmid_start)
+            if pmid_end != -1:
+                pmid = abstract[pmid_start:pmid_end + 1]
+                abstract = abstract[pmid_end + 1:].strip()
+        
+        prompt = f"""
+Vertaal de volgende medische abstract naar het Nederlands. Gebruik duidelijke en begrijpelijke taal.
+Behoud de PMID referentie en vertaal alleen de abstract tekst.
 
-{text}
+{abstract}
 
 Vertaling:
 """
-    response = openai.ChatCompletion.create(
-        model="gpt-4",
-        messages=[
-            {"role": "user", "content": prompt}
-        ],
-        temperature=0.3
-    )
-    return response.choices[0].message['content'].strip()
+        try:
+            response = openai.ChatCompletion.create(
+                model="gpt-4",
+                messages=[
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=0.3,
+                max_tokens=2000  # Limit response length
+            )
+            translated = response.choices[0].message['content'].strip()
+            if pmid:
+                translated = f"{pmid} {translated}"
+            translated_abstracts.append(translated)
+        except Exception as e:
+            print(f"Error translating abstract: {e}")
+            translated_abstracts.append(f"Fout bij vertalen: {abstract}")
+    
+    return '\n\n'.join(translated_abstracts)
 
 @app.route("/", methods=["GET", "POST"])
 def index():
