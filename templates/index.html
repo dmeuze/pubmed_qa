@@ -28,7 +28,10 @@
     </form>
     {% if answer %}
     <h2>AI Antwoord:</h2>
-    <p>{{ answer|safe }}</p>
+    {% if from_cache %}
+    <p class="cache-notification">Dit antwoord is uit de cache gehaald.</p>
+    {% endif %}
+    <p>{{ answer }}</p>
     {% endif %} {% if abstract %}
     <h2>Gevonden Abstracts:</h2>
     <div class="abstracts">

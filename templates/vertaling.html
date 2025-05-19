@@ -23,6 +23,9 @@
     </form>
     {% if translated %}
     <h2>Vertaalde Abstracts:</h2>
+    {% if from_cache %}
+    <p class="cache-notification">Deze vertaling is uit de cache gehaald.</p>
+    {% endif %}
     <div class="abstracts">
       {% for abs in translated.split('\n\n') %}
       <div class="abstract">

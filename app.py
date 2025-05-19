@@ -4,12 +4,25 @@ from bs4 import BeautifulSoup
 import openai
 import os
 from dotenv import load_dotenv
+import json
+import hashlib
 
 
 load_dotenv()
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
 app = Flask(__name__)
+
+def load_cache():
+    try:
+        with open("cache.json", "r") as f:
+            return json.load(f)
+    except FileNotFoundError:
+        return {"abstracts": {}, "answers": {}}
+
+def save_cache(cache):
+    with open("cache.json", "w") as f:
+        json.dump(cache, f, indent=2)
 
 def get_pubmed_abstract(pmid):
     url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi"
@@ -25,8 +38,27 @@ def get_pubmed_abstract(pmid):
         return abstract_text.get_text(strip=True)
     return "Geen abstract gevonden."
 
+def get_pubmed_abstract_cached(pmid):
+    cache = load_cache()
+    if pmid in cache["abstracts"]:
+        return cache["abstracts"][pmid], True
 
-def ask_question_about_text(text, question):
+    # Anders ophalen
+    abstract = get_pubmed_abstract(pmid)
+    if abstract and abstract != "Geen abstract gevonden.":
+        cache["abstracts"][pmid] = abstract
+        save_cache(cache)
+    return abstract, False
+
+def ask_question_cached(text, question):
+    cache = load_cache()
+    key_raw = text + question
+    key = hashlib.sha256(key_raw.encode()).hexdigest()
+
+    if key in cache["answers"]:
+        return cache["answers"][key], True
+
+    # Anders call GPT
     prompt = f"""
 Je bent een Nederlands sprekende medisch expert. Analyseer de volgende teksten uit PubMed en beantwoord de vraag.
 Belangrijke instructies:
@@ -56,9 +88,19 @@ Antwoord in het Nederlands, in eenvoudige en begrijpelijke taal:
     # Mark contradictions and non-text answers in blue
     answer = answer.replace("[TEGENSTRIJDIG]", '<span class="contradiction">[TEGENSTRIJDIG]</span>')
     answer = answer.replace("[NIET IN TEKST]", '<span class="contradiction">[NIET IN TEKST]</span>')
-    return answer
+    
+    cache["answers"][key] = answer
+    save_cache(cache)
+    return answer, False
 
-def translate_abstract_to_dutch(text):
+def translate_abstract_to_dutch_cached(text):
+    cache = load_cache()
+    key_raw = text
+    key = hashlib.sha256(key_raw.encode()).hexdigest()
+
+    if key in cache.get("translations", {}):
+        return cache["translations"][key], True
+
     # Split the text into individual abstracts
     abstracts = text.split('\n\n')
     translated_abstracts = []
@@ -101,7 +143,15 @@ Vertaling:
             print(f"Error translating abstract: {e}")
             translated_abstracts.append(f"Fout bij vertalen: {abstract}")
     
-    return '\n\n'.join(translated_abstracts)
+    result = '\n\n'.join(translated_abstracts)
+    
+    # Save to cache
+    if "translations" not in cache:
+        cache["translations"] = {}
+    cache["translations"][key] = result
+    save_cache(cache)
+    
+    return result, False
 
 @app.route("/", methods=["GET", "POST"])
 def index():
@@ -111,13 +161,14 @@ def index():
     question = ""
     pmids_raw = ""
     combined_abstracts = ""
+    from_cache = False
     if request.method == "POST":
         pmids_raw = request.form["pmids"]
         question = request.form["question"]
         pmid_list = pmids_raw.split(",")
         combined_abstracts = get_multiple_abstracts(pmid_list)
-        answer = ask_question_about_text(combined_abstracts, question)
-    return render_template("index.html", abstract=combined_abstracts, pmids=pmids_raw, answer=answer, pmid=pmid, question=question)
+        answer, from_cache = ask_question_cached(combined_abstracts, question)
+    return render_template("index.html", abstract=combined_abstracts, pmids=pmids_raw, answer=answer, pmid=pmid, question=question, from_cache=from_cache)
 
 @app.route("/vertaling", methods=["GET", "POST"])
 def vertaling():
@@ -125,17 +176,19 @@ def vertaling():
     abstracts = ""
     pmids_raw = ""
     combined_abstracts = ""
+    from_cache = False
     if request.method == "POST":
         pmids_raw = request.form["pmids"]
         pmid_list = pmids_raw.split(",")
         combined_abstracts = get_multiple_abstracts(pmid_list)
-        translated = translate_abstract_to_dutch(combined_abstracts)
-    return render_template("vertaling.html", pmids=pmids_raw, abstracts=combined_abstracts, translated=translated)
+        translated, from_cache = translate_abstract_to_dutch_cached(combined_abstracts)
+        abstracts = combined_abstracts
+    return render_template("vertaling.html", pmids=pmids_raw, abstracts=abstracts, translated=translated, from_cache=from_cache)
 
 def get_multiple_abstracts(pmids):
     abstracts = []
     for pmid in pmids:
-        abs_text = get_pubmed_abstract(pmid.strip())
+        abs_text, _ = get_pubmed_abstract_cached(pmid.strip())
         if abs_text and abs_text != "Geen abstract gevonden.":
             abstracts.append(f"(PMID: {pmid.strip()}) {abs_text}")
     return "\n\n".join(abstracts)

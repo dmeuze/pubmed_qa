@@ -65,3 +65,12 @@ nav a:hover {
   color: #007bff;
   font-weight: bold;
 }
+
+.cache-notification {
+  color: #28a745;
+  font-style: italic;
+  margin: 10px 0;
+  padding: 5px;
+  background-color: #e8f5e9;
+  border-radius: 4px;
+}
