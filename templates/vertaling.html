@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>PubMed Abstract Vertalen</title>
+    <title>PubMed Vertaling</title>
     <link
       rel="stylesheet"
       href="{{ url_for('static', filename='css/style.css') }}"
@@ -13,22 +13,32 @@
       <a href="/vertaling">Vertaal Abstract</a>
     </nav>
     <hr />
-    <h1>Vertaal PubMed Abstract naar Nederlands</h1>
+    <h1>Vertaal PubMed abstracts naar het Nederlands</h1>
     <form method="POST">
-      <label>PubMed PMID:</label><br />
-      <input type="text" name="pmid" size="40" required /><br /><br />
+      <label>PubMed PMID(s):</label><br />
+      <input type="text" name="pmids" size="80" required />
+      <small>Voer maximaal 5 PubMed ID's in, gescheiden door komma's</small
+      ><br /><br />
       <button type="submit">Vertaal</button>
-      {% if pmid %}
-      <p><strong>Gebruikte PubMed ID:</strong> {{ pmid }}</p>
-      {% endif %}
     </form>
-
-    {% if abstract %}
-    <h2>Origineel Abstract:</h2>
-    <p>{{ abstract }}</p>
-    {% endif %} {% if translated %}
-    <h2>Vertaling in het Nederlands:</h2>
-    <p>{{ translated }}</p>
+    {% if translated %}
+    <h2>Vertaalde Abstracts:</h2>
+    <div class="abstracts">
+      {% for abs in translated.split('\n\n') %}
+      <div class="abstract">
+        <p>{{ abs }}</p>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %} {% if abstracts %}
+    <h2>Originele Abstracts:</h2>
+    <div class="abstracts">
+      {% for abs in abstracts.split('\n\n') %}
+      <div class="abstract">
+        <p>{{ abs }}</p>
+      </div>
+      {% endfor %}
+    </div>
     {% endif %}
   </body>
 </html>

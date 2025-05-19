@@ -15,8 +15,10 @@
     <hr />
     <h1>Stel een vraag over een PubMed abstract</h1>
     <form method="POST">
-      <label>PubMed PMID:</label><br />
-      <input type="text" name="pmid" size="40" required /><br /><br />
+      <label>PubMed PMID(s):</label><br />
+      <input type="text" name="pmids" size="80" required />
+      <small>Voer maximaal 5 PubMed ID's in, gescheiden door komma's</small
+      ><br /><br />
       <label>Jouw vraag:</label><br />
       <input type="text" name="question" size="80" required /><br /><br />
       <button type="submit">Vraag AI</button>
@@ -24,12 +26,18 @@
       <p><strong>Gebruikte PubMed ID:</strong> {{ pmid }}</p>
       {% endif %}
     </form>
-    {% if abstract %}
-    <h2>Abstract:</h2>
-    <p>{{ abstract }}</p>
-    {% endif %} {% if answer %}
+    {% if answer %}
     <h2>AI Antwoord:</h2>
-    <p>{{ answer }}</p>
+    <p>{{ answer|safe }}</p>
+    {% endif %} {% if abstract %}
+    <h2>Gevonden Abstracts:</h2>
+    <div class="abstracts">
+      {% for abs in abstract.split('\n\n') %}
+      <div class="abstract">
+        <p>{{ abs }}</p>
+      </div>
+      {% endfor %}
+    </div>
     {% endif %}
   </body>
 </html>
